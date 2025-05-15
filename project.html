@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <nav class="bg-gray-800 text-white p-4">
+    <div id="nav-links" class="space-x-4">
+      <a href="#" onclick="showSection('home')" class="hover:underline">Home</a>
+      <a href="#" onclick="showSection('register')" class="hover:underline">Register</a>
+      <a href="#" onclick="showSection('login')" class="hover:underline">Login</a>
+    </div>
+  </nav>
+
+  <div id="home" class="section max-w-4xl mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-4">Hospital Management System</h1>
+    <p>Please register or log in to access features.</p>
+  </div>
+
+  <div id="register" class="section hidden max-w-md mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">Register</h2>
+    <div class="space-y-4">
+      <input id="reg-username" type="text" placeholder="Username" class="w-full p-2 border rounded">
+      <input id="reg-password" type="password" placeholder="Password" class="w-full p-2 border rounded">
+      <select id="reg-role" class="w-full p-2 border rounded">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button onclick="register()" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Register</button>
+    </div>
+  </div>
+
+  <div id="login" class="section hidden max-w-md mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">Login</h2>
+    <div class="space-y-4">
+      <input id="login-username" type="text" placeholder="Username" class="w-full p-2 border rounded">
+      <input id="login-password" type="password" placeholder="Password" class="w-full p-2 border rounded">
+      <button onclick="login()" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Login</button>
+    </div>
+  </div>
+
+  <div id="book-appointment" class="section hidden max-w-md mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">Book Appointment</h2>
+    <div class="space-y-4">
+      <select id="doctor-select" class="w-full p-2 border rounded"></select>
+      <input id="appointment-date" type="date" class="w-full p-2 border rounded">
+      <button onclick="bookAppointment()" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Book</button>
+    </div>
+  </div>
+
+  <div id="send-message" class="section hidden max-w-md mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">Send Message</h2>
+    <div class="space-y-4">
+      <textarea id="message-content" placeholder="Your message" class="w-full p-2 border rounded"></textarea>
+      <button onclick="sendMessage()" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Send</button>
+    </div>
+  </div>
+
+  <div id="appointments" class="section hidden max-w-4xl mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">All Appointments</h2>
+    <table class="w-full border">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="p-2">User</th>
+          <th class="p-2">Doctor</th>
+          <th class="p-2">Date</th>
+          <th class="p-2">Status</th>
+          <th class="p-2">Action</th>
+        </tr>
+      </thead>
+      <tbody id="appointments-table"></tbody>
+    </table>
+  </div>
+
+  <div id="doctors" class="section hidden max-w-4xl mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">All Doctors</h2>
+    <table class="w-full border">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="p-2">Name</th>
+          <th class="p-2">Specialty</th>
+        </tr>
+      </thead>
+      <tbody id="doctors-table"></tbody>
+    </table>
+  </div>
+
+  <div id="messages" class="section hidden max-w-4xl mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">All Messages</h2>
+    <table class="w-full border">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="p-2">User</th>
+          <th class="p-2">Message</th>
+          <th class="p-2">Date</th>
+        </tr>
+      </thead>
+      <tbody id="messages-table"></tbody>
+    </table>
+  </div>
+
+  <div id="add-doctor" class="section hidden max-w-md mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">Add Doctor</h2>
+    <div class="space-y-4">
+      <input id="doctor-name" type="text" placeholder="Doctor Name" class="w-full p-2 border rounded">
+      <input id="doctor-specialty" type="text" placeholder="Specialty" class="w-full p-2 border rounded">
+      <button onclick="addDoctor()" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Doctor</button>
+    </div>
+  </div>
+
+  <div id="add-admin" class="section hidden max-w-md mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">Add Admin</h2>
+    <div class="space-y-4">
+      <input id="admin-username" type="text" placeholder="Username" class="w-full p-2 border rounded">
+      <input id="admin-password" type="password" placeholder="Password" class="w-full p-2 border rounded">
+      <button onclick="addAdmin()" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Admin</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    // Initialize localStorage
+    function initializeStorage() {
+      if (!localStorage.getItem('users')) {
+        localStorage.setItem('users', JSON.stringify([]));
+      }
+      if (!localStorage.getItem('doctors')) {
+        localStorage.setItem('doctors', JSON.stringify([
+          { id: 1, name: 'Dr. Smith', specialty: 'Cardiology' },
+          { id: 2, name: 'Dr. Jones', specialty: 'Neurology' }
+        ]));
+      }
+      if (!localStorage.getItem('appointments')) {
+        localStorage.setItem('appointments', JSON.stringify([]));
+      }
+      if (!localStorage.getItem('messages')) {
+        localStorage.setItem('messages', JSON.stringify([]));
+      }
+    }
+
+    // Show specific section
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(section => section.classList.add('hidden'));
+      document.getElementById(sectionId).classList.remove('hidden');
+      updateNav();
+    }
+
+    // Update navigation
+    function updateNav() {
+      const navLinks = document.getElementById('nav-links');
+      navLinks.innerHTML = '<a href="#" onclick="showSection(\'home\')" class="hover:underline">Home</a>';
+      if (!currentUser) {
+        navLinks.innerHTML += `
+          <a href="#" onclick="showSection('register')" class="hover:underline ml-4">Register</a>
+          <a href="#" onclick="showSection('login')" class="hover:underline ml-4">Login</a>
+        `;
+      } else {
+        if (currentUser.role === 'user') {
+          navLinks.innerHTML += `
+            <a href="#" onclick="showSection('book-appointment')" class="hover:underline ml-4">Book Appointment</a>
+            <a href="#" onclick="showSection('send-message')" class="hover:underline ml-4">Send Message</a>
+          `;
+        } else if (currentUser.role === 'admin') {
+          navLinks.innerHTML += `
+            <a href="#" onclick="showSection('appointments')" class="hover:underline ml-4">Appointments</a>
+            <a href="#" onclick="showSection('doctors')" class="hover:underline ml-4">Doctors</a>
+            <a href="#" onclick="showSection('messages')" class="hover:underline ml-4">Messages</a>
+            <a href="#" onclick="showSection('add-doctor')" class="hover:underline ml-4">Add Doctor</a>
+            <a href="#" onclick="showSection('add-admin')" class="hover:underline ml-4">Add Admin</a>
+          `;
+        }
+        navLinks.innerHTML += <button onclick="logout()" class="ml-4 p-2 bg-red-500 text-white rounded hover:bg-red-600">Logout</button>;
+      }
+      if (currentUser?.role === 'user') {
+        updateDoctorSelect();
+      } else if (currentUser?.role === 'admin') {
+        updateAppointmentsTable();
+        updateDoctorsTable();
+        updateMessagesTable();
+      }
+    }
+
+    // Register
+    function register() {
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+      const role = document.getElementById('reg-role').value;
+      if (!username || !password) {
+        alert('Please enter username and password');
+        return;
+      }
+      const users = JSON.parse(localStorage.getItem('users'));
+      if (users.find(user => user.username === username)) {
+        alert('Username already exists');
+        return;
+      }
+      users.push({ username, password, role });
+      localStorage.setItem('users', JSON.stringify(users));
+      alert('Registered successfully');
+      document.getElementById('reg-username').value = '';
+      document.getElementById('reg-password').value = '';
+      showSection('login');
+    }
+
+    // Login
+    function login() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const users = JSON.parse(localStorage.getItem('users'));
+      const user = users.find(user => user.username === username && user.password === password);
+      if (!user) {
+        alert('Invalid credentials');
+        return;
+      }
+      currentUser = user;
+      alert('Logged in successfully');
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+      showSection('home');
+    }
+
+    // Logout
+    function logout() {
+      currentUser = null;
+      showSection('home');
+    }
+
+    // Book Appointment
+    function bookAppointment() {
+      if (!currentUser || currentUser.role !== 'user') {
+        alert('Access denied');
+        return;
+      }
+      const doctorId = document.getElementById('doctor-select').value;
+      const date = document.getElementById('appointment-date').value;
+      if (!doctorId || !date) {
+        alert('Please select a doctor and date');
+        return;
+      }
+      const appointments = JSON.parse(localStorage.getItem('appointments'));
+      appointments.push({
+        id: Date.now(),
+        userId: currentUser.username,
+        doctorId: parseInt(doctorId),
+        date,
+        status: 'pending'
+      });
+      localStorage.setItem('appointments', JSON.stringify(appointments));
+      alert('Appointment booked');
+      document.getElementById('doctor-select').value = '';
+      document.getElementById('appointment-date').value = '';
+      showSection('home');
+    }
+
+    // Send Message
+    function sendMessage() {
+      if (!currentUser || currentUser.role !== 'user') {
+        alert('Access denied');
+        return;
+      }
+      const content = document.getElementById('message-content').value.trim();
+      if (!content) {
+        alert('Please enter a message');
+        return;
+      }
+      const messages = JSON.parse(localStorage.getItem('messages'));
+      messages.push({
+        id: Date.now(),
+        userId: currentUser.username,
+        content,
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('messages', JSON.stringify(messages));
+      alert('Message sent');
+      document.getElementById('message-content').value = '';
+      showSection('home');
+    }
+
+    // Update Doctor Select
+    function updateDoctorSelect() {
+      const select = document.getElementById('doctor-select');
+      const doctors = JSON.parse(localStorage.getItem('doctors'));
+      select.innerHTML = '<option value="">Select Doctor</option>';
+      doctors.forEach(doctor => {
+        select.innerHTML += <option value="${doctor.id}">${doctor.name} (${doctor.specialty})</option>;
+      });
+    }
+
+    // Update Appointments Table
+    function updateAppointmentsTable() {
+      const tbody = document.getElementById('appointments-table');
+      const appointments = JSON.parse(localStorage.getItem('appointments'));
+      const doctors = JSON.parse(localStorage.getItem('doctors'));
+      tbody.innerHTML = '';
+      appointments.forEach(appointment => {
+        const doctor = doctors.find(d => d.id === appointment.doctorId);
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2 border">${appointment.userId}</td>
+            <td class="p-2 border">${doctor ? doctor.name : 'Unknown'}</td>
+            <td class="p-2 border">${new Date(appointment.date).toLocaleDateString()}</td>
+            <td class="p-2 border">${appointment.status}</td>
+            <td class="p-2 border">
+              <select onchange="setAppointmentStatus(${appointment.id}, this.value)" class="p-1 border rounded">
+                <option value="pending" ${appointment.status === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="accepted" ${appointment.status === 'accepted' ? 'selected' : ''}>Accepted</option>
+                <option value="rejected" ${appointment.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Set Appointment Status
+    function setAppointmentStatus(id, status) {
+      if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied');
+        return;
+      }
+      const appointments = JSON.parse(localStorage.getItem('appointments'));
+      const appointment = appointments.find(a => a.id === id);
+      if (appointment) {
+        appointment.status = status;
+        localStorage.setItem('appointments', JSON.stringify(appointments));
+        updateAppointmentsTable();
+      }
+    }
+
+    // Update Doctors Table
+    function updateDoctorsTable() {
+      const tbody = document.getElementById('doctors-table');
+      const doctors = JSON.parse(localStorage.getItem('doctors'));
+      tbody.innerHTML = '';
+      doctors.forEach(doctor => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2 border">${doctor.name}</td>
+            <td class="p-2 border">${doctor.specialty}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // Update Messages Table
+    function updateMessagesTable() {
+      const tbody = document.getElementById('messages-table');
+      const messages = JSON.parse(localStorage.getItem('messages'));
+      tbody.innerHTML = '';
+      messages.forEach(message => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2 border">${message.userId}</td>
+            <td class="p-2 border">${message.content}</td>
+            <td class="p-2 border">${new Date(message.createdAt).toLocaleString()}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // Add Doctor
+    function addDoctor() {
+      if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied');
+        return;
+      }
+      const name = document.getElementById('doctor-name').value.trim();
+      const specialty = document.getElementById('doctor-specialty').value.trim();
+      if (!name || !specialty) {
+        alert('Please enter name and specialty');
+        return;
+      }
+      const doctors = JSON.parse(localStorage.getItem('doctors'));
+      doctors.push({
+        id: Date.now(),
+        name,
+        specialty
+      });
+      localStorage.setItem('doctors', JSON.stringify(doctors));
+      alert('Doctor added');
+      document.getElementById('doctor-name').value = '';
+      document.getElementById('doctor-specialty').value = '';
+      updateDoctorsTable();
+      showSection('doctors');
+    }
+
+    // Add Admin
+    function addAdmin() {
+      if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied');
+        return;
+      }
+      const username = document.getElementById('admin-username').value.trim();
+      const password = document.getElementById('admin-password').value.trim();
+      if (!username || !password) {
+        alert('Please enter username and password');
+        return;
+      }
+      const users = JSON.parse(localStorage.getItem('users'));
+      if (users.find(user => user.username === username)) {
+        alert('Username already exists');
+        return;
+      }
+      users.push({ username, password, role: 'admin' });
+      localStorage.setItem('users', JSON.stringify(users));
+      alert('Admin added');
+      document.getElementById('admin-username').value = '';
+      document.getElementById('admin-password').value = '';
+      showSection('home');
+    }
+
+    // Initialize
+    initializeStorage();
+    showSection('home');
+  </script>
+</body>
+</html>
